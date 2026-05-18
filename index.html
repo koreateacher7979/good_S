@@ -209,7 +209,7 @@
             submitBtn.disabled = true;
 
             // URL 미입력 시 프리뷰(Mock) 전송 처리
-            if (SCRIPT_URL === '여기에_웹앱_URL을_입력하세요' || !SCRIPT_URL.startsWith('http')) {
+            if (SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbygDCRwbgUvqw5sp-RJJhT0hslD2o9EQ4Io0tPDIE9BI10oJCe6xWkxlTZzWutdCxQ/exec' || !SCRIPT_URL.startsWith('http')) {
                 setTimeout(() => {
                     showToast("미리보기: 전송 완료! (실제 저장 안됨)", "fa-check-circle", "text-green-400");
                     document.getElementById('obsContent').value = '';
