@@ -116,7 +116,6 @@
         async function fetchInitData() {
             showToast("데이터를 동기화 중입니다...", "fa-sync fa-spin", "text-blue-400");
             
-            // 🚨 버그 수정 완료: 조건문을 임시 문자열로 다시 되돌려, 정상적인 URL일 경우 아래의 fetch 구문이 실행되도록 수정했습니다.
             if (SCRIPT_URL === '여기에_웹앱_URL을_입력하세요' || !SCRIPT_URL.startsWith('http')) {
                 setTimeout(() => {
                     document.getElementById('schoolNameDisplay').innerText = "테스트(미연동)";
@@ -149,7 +148,20 @@
                 const data = await response.json();
                 
                 document.getElementById('schoolNameDisplay').innerText = data.schoolName;
-                globalClassesData = data.classesData;
+                
+                // 🚨 버그 수정: 스프레드시트가 '1-1'을 날짜(Jan 01)로 자동 변환한 경우 '1-1' 텍스트로 복구
+                globalClassesData = {};
+                for (const key in data.classesData) {
+                    let cleanClassName = key;
+                    if (typeof key === 'string' && (key.includes('GMT') || key.includes('Z') || key.includes('표준시'))) {
+                        const dateTest = new Date(key);
+                        if (!isNaN(dateTest)) {
+                            // 날짜 객체의 월(Month)과 일(Date)을 하이픈(-)으로 조합
+                            cleanClassName = `${dateTest.getMonth() + 1}-${dateTest.getDate()}`;
+                        }
+                    }
+                    globalClassesData[cleanClassName] = data.classesData[key];
+                }
 
                 // 교사 목록 세팅
                 data.teachers.forEach(teacher => {
@@ -158,7 +170,7 @@
                     teacherSelect.appendChild(option);
                 });
 
-                // 학급 목록 세팅
+                // 학급 목록 세팅 (복구된 학급 이름으로 생성)
                 Object.keys(globalClassesData).forEach(className => {
                     const option = document.createElement('option');
                     option.value = className; option.textContent = className;
@@ -208,7 +220,6 @@
             document.getElementById('btnLoading').classList.remove('hidden');
             submitBtn.disabled = true;
 
-            // 🚨 여기도 버그 수정 완료
             if (SCRIPT_URL === '여기에_웹앱_URL을_입력하세요' || !SCRIPT_URL.startsWith('http')) {
                 setTimeout(() => {
                     showToast("미리보기: 전송 완료! (실제 저장 안됨)", "fa-check-circle", "text-green-400");
@@ -230,7 +241,7 @@
             const payload = {
                 action: 'saveRecord',
                 teacher: teacher,
-                className: className,
+                className: className, // 서버에는 변환된 '1-1' 값으로 저장됩니다.
                 student: student,
                 type: type,
                 content: content
